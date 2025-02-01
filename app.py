@@ -68,25 +68,33 @@ def get_pubmed_articles(query, max_results):
             f"db=pubmed&id={pmid}&retmode=xml"
         )
         fetch_response = requests.get(fetch_url)
-        fetch_root = ET.fromstring(fetch_response.content)
         
-        # Extraire le titre
+        # Vérifier que la réponse est OK
+        if fetch_response.status_code != 200:
+            st.warning(f"Erreur lors de la récupération du PMID {pmid}: statut {fetch_response.status_code}")
+            continue  # passer au PMID suivant
+        
+        # Tenter de parser la réponse XML
+        try:
+            fetch_root = ET.fromstring(fetch_response.content)
+        except Exception as e:
+            st.warning(f"Erreur de parsing XML pour le PMID {pmid}: {e}")
+            # Vous pouvez également logger fetch_response.text pour diagnostiquer le contenu renvoyé.
+            continue
+
+        # Extraire les informations souhaitées
         title_elem = fetch_root.find(".//ArticleTitle")
         title = title_elem.text if title_elem is not None else "N/A"
         
-        # Extraire le nom du journal
         journal_elem = fetch_root.find(".//Journal/Title")
         journal = journal_elem.text if journal_elem is not None else "N/A"
         
-        # Extraire l'année de publication
         year_elem = fetch_root.find(".//PubDate/Year")
         year = year_elem.text if year_elem is not None else "N/A"
         
-        # Extraire l'abstract
         abstract_elem = fetch_root.find(".//Abstract/AbstractText")
         abstract = abstract_elem.text if abstract_elem is not None else "N/A"
         
-        # Construire l'URL pour consulter l'article sur PubMed
         url = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
         
         articles.append({
@@ -98,6 +106,7 @@ def get_pubmed_articles(query, max_results):
             "URL": url
         })
     return articles
+
 
 ############################################
 # Fonction pour filtrer les articles selon la présence des mots-clés
