@@ -12,7 +12,8 @@ from datetime import datetime
 
 ############################################
 # Configuration NLTK pour Streamlit Cloud
-# On définit un dossier local pour stocker les ressources NLTK
+
+# Définir un dossier local pour stocker les ressources NLTK
 nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
 if not os.path.exists(nltk_data_dir):
     os.makedirs(nltk_data_dir)
@@ -28,14 +29,18 @@ def download_nltk_resource(resource_name):
 download_nltk_resource('tokenizers/punkt')
 download_nltk_resource('corpora/stopwords')
 
-# Assurer que le dossier "punkt_tab" existe en copiant "punkt"
+# Pour satisfaire la recherche du dossier "tokenizers/punkt_tab/english",
+# nous créons ce dossier en copiant le fichier "english.pickle" depuis "punkt".
 punkt_dir = os.path.join(nltk_data_dir, "tokenizers", "punkt")
 punkt_tab_dir = os.path.join(nltk_data_dir, "tokenizers", "punkt_tab")
-if not os.path.exists(punkt_tab_dir) and os.path.exists(punkt_dir):
-    try:
-        shutil.copytree(punkt_dir, punkt_tab_dir)
-    except Exception as e:
-        st.warning(f"Erreur lors de la copie de 'punkt' vers 'punkt_tab' : {e}")
+english_tab_dir = os.path.join(punkt_tab_dir, "english")
+if not os.path.exists(english_tab_dir):
+    os.makedirs(english_tab_dir, exist_ok=True)
+    english_pickle = os.path.join(punkt_dir, "english.pickle")
+    if os.path.exists(english_pickle):
+        shutil.copy(english_pickle, english_tab_dir)
+    else:
+        st.warning("Le fichier english.pickle n'a pas été trouvé dans le dossier 'punkt'.")
 
 ############################################
 # Interface Streamlit
