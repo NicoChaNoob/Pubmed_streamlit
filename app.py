@@ -8,6 +8,7 @@ import re
 import nltk
 from nltk.tokenize import word_tokenize
 from datetime import datetime
+import time
 
 ############################################
 # Configuration NLTK for Streamlit Cloud
@@ -40,6 +41,10 @@ if not os.path.exists(english_tab_dir):
         shutil.copy(english_pickle, english_tab_dir)
     else:
         st.warning("The file english.pickle was not found in the 'punkt' directory.")
+
+############################################
+# Set your API key (provided)
+API_KEY = "0028f009242fa540c86c474f429c330e8108"
 
 ############################################
 # Streamlit Interface
@@ -78,10 +83,11 @@ st.markdown(f"**Complete PubMed query:** `{full_query}`")
 ############################################
 # Function to retrieve articles from PubMed via the API
 
-def get_pubmed_articles(query, max_results):
+def get_pubmed_articles(query, max_results, api_key):
+    # Construct the search URL with the API key
     search_url = (
         f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?"
-        f"db=pubmed&term={query}&retmax={max_results}&retmode=xml"
+        f"db=pubmed&term={query}&retmax={max_results}&retmode=xml&api_key={api_key}"
     )
     search_response = requests.get(search_url)
     try:
@@ -97,9 +103,14 @@ def get_pubmed_articles(query, max_results):
     for pmid in pmid_list:
         fetch_url = (
             f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?"
-            f"db=pubmed&id={pmid}&retmode=xml"
+            f"db=pubmed&id={pmid}&retmode=xml&api_key={api_key}"
         )
         fetch_response = requests.get(fetch_url)
+        # If rate limited, wait and retry once.
+        if fetch_response.status_code == 429:
+            st.warning(f"Error retrieving PMID {pmid}: status 429 (Too many requests). Waiting 1 second and retrying.")
+            time.sleep(1)
+            fetch_response = requests.get(fetch_url)
         if fetch_response.status_code != 200:
             st.warning(f"Error retrieving PMID {pmid}: status {fetch_response.status_code}")
             continue
@@ -123,7 +134,6 @@ def get_pubmed_articles(query, max_results):
         abstract_elem = fetch_root.find(".//Abstract/AbstractText")
         abstract = abstract_elem.text if abstract_elem is not None else "N/A"
         
-        # Link to detailed PubMed page
         url = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
         
         articles.append({
@@ -134,6 +144,8 @@ def get_pubmed_articles(query, max_results):
             "Abstract": abstract,
             "URL": url
         })
+        # Add a short delay between requests to avoid hitting the rate limit again.
+        time.sleep(0.5)
     return articles
 
 ############################################
@@ -141,7 +153,7 @@ def get_pubmed_articles(query, max_results):
 
 if st.button("Run Search"):
     with st.spinner("Retrieving articles from PubMed..."):
-        articles = get_pubmed_articles(full_query, max_results)
+        articles = get_pubmed_articles(full_query, max_results, API_KEY)
     
     if articles:
         df = pd.DataFrame(articles)
