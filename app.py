@@ -1,4 +1,5 @@
 import os
+import shutil
 import streamlit as st
 import requests
 import xml.etree.ElementTree as ET
@@ -25,8 +26,16 @@ def download_nltk_resource(resource_name):
 
 # Télécharger les ressources nécessaires
 download_nltk_resource('tokenizers/punkt')
-download_nltk_resource('tokenizers/punkt_tab')
 download_nltk_resource('corpora/stopwords')
+
+# Assurer que le dossier "punkt_tab" existe en copiant "punkt"
+punkt_dir = os.path.join(nltk_data_dir, "tokenizers", "punkt")
+punkt_tab_dir = os.path.join(nltk_data_dir, "tokenizers", "punkt_tab")
+if not os.path.exists(punkt_tab_dir) and os.path.exists(punkt_dir):
+    try:
+        shutil.copytree(punkt_dir, punkt_tab_dir)
+    except Exception as e:
+        st.warning(f"Erreur lors de la copie de 'punkt' vers 'punkt_tab' : {e}")
 
 ############################################
 # Interface Streamlit
