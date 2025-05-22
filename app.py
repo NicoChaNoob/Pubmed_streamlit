@@ -176,7 +176,7 @@ def analyze_extracted_data(articles):
     resp = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "Tu es un expert en littérature scientifique."},
+            {"role": "system", "content": "Tu es un expert en pharmacovigilance."},
             {"role": "user",   "content": prompt}
         ],
         temperature=0.7,
