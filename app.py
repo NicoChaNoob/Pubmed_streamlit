@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 import nltk
 from datetime import datetime
-import openai
+#import openai
 
 ############################################
 # Configuration NLTK pour Streamlit Cloud
@@ -162,20 +162,20 @@ def fetch_pubmed_details(pmids, api_key):
     return articles
 
 # Fonction d'analyse ChatGPT (inchangée)
-def analyze_extracted_data(articles):
-    text_to_analyze = "\n".join(f"Title: {a['Title']}\nAbstract: {a['Abstract']}" for a in articles)
-    prompt = (
-        "Analyse ces résultats PubMed en synthèse naturalisée :\n\n" + text_to_analyze
-    )
-    resp = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role":"system", "content":"Tu es un expert en littérature scientifique."},
-            {"role":"user",   "content":prompt}
-        ],
-        max_tokens=500
-    )
-    return resp.choices[0].message.content
+# def analyze_extracted_data(articles):
+#   text_to_analyze = "\n".join(f"Title: {a['Title']}\nAbstract: {a['Abstract']}" for a in articles)
+#   prompt = (
+#      "Analyse ces résultats PubMed en synthèse naturalisée :\n\n" + text_to_analyze
+#    )
+#    resp = openai.ChatCompletion.create(
+#        model="gpt-3.5-turbo",
+#        messages=[
+#            {"role":"system", "content":"Tu es un expert en littérature scientifique."},
+#            {"role":"user",   "content":prompt}
+#        ],
+#        max_tokens=500
+#    )
+#    return resp.choices[0].message.content
 
 ############################################
 # Bouton d'extraction et d'analyse
@@ -201,7 +201,7 @@ if st.button("Run Search & Analyze"):
         st.download_button("Download Excel", f, out)
 
     # analyse ChatGPT
-    with st.spinner("Analyzing with ChatGPT…"):
-        analysis = analyze_extracted_data(articles)
-    st.markdown("### ChatGPT Analysis")
-    st.write(analysis)
+ #   with st.spinner("Analyzing with ChatGPT…"):
+ #       analysis = analyze_extracted_data(articles)
+ #   st.markdown("### ChatGPT Analysis")
+ #   st.write(analysis)
