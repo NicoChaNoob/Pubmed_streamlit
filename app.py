@@ -164,9 +164,9 @@ def fetch_pubmed_details(pmids, api_key):
 
 # Fonction d'analyse ChatGPT (inchangée)
 def analyze_extracted_data(articles):
-   text_to_analyze = "\n".join(f"Title: {a['Title']}\nAbstract: {a['Abstract']}" for a in articles)
-   prompt = (
-      "Analyse ces résultats PubMed en synthèse naturalisée :\n\n" + text_to_analyze
+    text_to_analyze = "\n".join(f"Title: {a['Title']}\nAbstract: {a['Abstract']}" for a in articles)
+    prompt = (
+        "Analyse ces résultats PubMed en synthèse naturalisée :\n\n" + text_to_analyze
     )
     resp = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -176,7 +176,7 @@ def analyze_extracted_data(articles):
         ],
         max_tokens=500
     )
-return resp.choices[0].message.content
+    return resp.choices[0].message.content
 
 ############################################
 # Bouton d'extraction et d'analyse
