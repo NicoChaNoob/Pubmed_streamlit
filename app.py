@@ -8,7 +8,6 @@ import pandas as pd
 import nltk
 from datetime import datetime
 import openai
-import streamlit as st
 
 ############################################
 # Configuration NLTK pour Streamlit Cloud
@@ -41,7 +40,6 @@ if not os.path.exists(english_tab_dir):
 # Clés API
 
 API_KEY = "0028f009242fa540c86c474f429c330e8108"
-#CHATGPT_API_KEY = "votre_cle_chatgpt_ici"
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 ############################################
@@ -74,7 +72,6 @@ st.markdown(f"**Requête complète PubMed :** `{full_query}`")
 # Fonction de récupération paginée
 
 def get_all_pubmed_pmids(query, api_key, batch=500):
-    # 1. Obtenir le Count
     url0 = (
         f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?"
         f"db=pubmed&term={query}&retmode=xml&api_key={api_key}&retmax=0"
@@ -83,7 +80,6 @@ def get_all_pubmed_pmids(query, api_key, batch=500):
     root0 = ET.fromstring(r0.content)
     count = int(root0.findtext("Count", "0"))
     pmids = []
-    # 2. Paginer
     for start in range(0, count, batch):
         url = (
             f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?"
@@ -118,13 +114,11 @@ def fetch_pubmed_details(pmids, api_key):
             e = elem.find(path)
             return e.text if e is not None and e.text else default
 
-        # extraction simplifiée de quelques champs clés
-        title  = get_text(art, "ArticleTitle")
+        title    = get_text(art, "ArticleTitle")
         abstract = " ".join([e.text for e in art.findall("Abstract/AbstractText") if e.text]) or "N/A"
-        journal = get_text(art, "Journal/Title")
-        pmc_id  = xr.findtext(".//PubmedData/ArticleIdList/ArticleId[@IdType='pmc']", "N/A")
+        journal  = get_text(art, "Journal/Title")
+        pmc_id   = xr.findtext(".//PubmedData/ArticleIdList/ArticleId[@IdType='pmc']", "N/A")
 
-        # auteur(s)
         authors = []
         for au in art.findall("AuthorList/Author"):
             fn, ln = au.findtext("ForeName",""), au.findtext("LastName","")
@@ -132,15 +126,16 @@ def fetch_pubmed_details(pmids, api_key):
             if name: authors.append(name)
         auth = "; ".join(authors) or "N/A"
 
-        # autres champs (ISSN, volume, issue, pages, langues, MeSH...)
         issn   = get_text(art, "Journal/ISSN")
         vol    = get_text(art, "Journal/JournalIssue/Volume")
         issue  = get_text(art, "Journal/JournalIssue/Issue")
         pages  = get_text(art, "Pagination/MedlinePgn")
         year   = get_text(art, "Journal/JournalIssue/PubDate/Year")
         lang   = get_text(art, "Language")
-        mesh   = "; ".join([mh.findtext("DescriptorName","") for mh in xr.findall(".//MeshHeadingList/MeshHeading")]) or "N/A"
-        grants = "; ".join([g.findtext("GrantID","") for g in xr.findall(".//GrantList/Grant")]) or "N/A"
+        mesh   = "; ".join([mh.findtext("DescriptorName","") 
+                          for mh in xr.findall(".//MeshHeadingList/MeshHeading")]) or "N/A"
+        grants = "; ".join([g.findtext("GrantID","") 
+                            for g in xr.findall(".//GrantList/Grant")]) or "N/A"
 
         articles.append({
             "PMID": pmid,
@@ -162,18 +157,26 @@ def fetch_pubmed_details(pmids, api_key):
         time.sleep(0.3)
     return articles
 
-# Fonction d'analyse ChatGPT (inchangée)
+# Fonction d'analyse ChatGPT mise à jour
 def analyze_extracted_data(articles):
-    text_to_analyze = "\n".join(f"Title: {a['Title']}\nAbstract: {a['Abstract']}" for a in articles)
+    # Limiter aux 20 premiers articles pour éviter de dépasser la limite de tokens
+    subset = articles[:20]
+    text_to_analyze = "\n".join(
+        f"Title: {a['Title']}\nAbstract: {a['Abstract']}"
+        for a in subset
+    )
     prompt = (
-        "Analyse ces résultats PubMed en synthèse naturalisée :\n\n" + text_to_analyze
+        "Voici un extrait des 20 premiers articles PubMed. Peux-tu en fournir "
+        "une synthèse en langage naturel, en identifiant les points clés et thématiques principales ?\n\n"
+        + text_to_analyze
     )
     resp = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role":"system", "content":"Tu es un expert en littérature scientifique."},
-            {"role":"user",   "content":prompt}
+            {"role": "system", "content": "Tu es un expert en littérature scientifique."},
+            {"role": "user",   "content": prompt}
         ],
+        temperature=0.7,
         max_tokens=500
     )
     return resp.choices[0].message.content
@@ -186,11 +189,11 @@ if st.button("Run Search & Analyze"):
         pmids = get_all_pubmed_pmids(full_query, API_KEY)
     with st.spinner(f"Fetching details for {len(pmids)} articles..."):
         articles = fetch_pubmed_details(pmids, API_KEY)
-    st.success(f"Extrated {len(articles)} articles")
+    st.success(f"Extracted {len(articles)} articles")
     df = pd.DataFrame(articles)
     st.dataframe(df)
 
-    # agrégation Excel
+    # Agrégation Excel
     exec_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     df["Execution Date"], df["Query"] = exec_date, full_query
     out = "pubmed_results.xlsx"
@@ -198,10 +201,10 @@ if st.button("Run Search & Analyze"):
         old = pd.read_excel(out)
         df = pd.concat([old, df], ignore_index=True)
     df.to_excel(out, index=False)
-    with open(out,"rb") as f:
+    with open(out, "rb") as f:
         st.download_button("Download Excel", f, out)
 
-    # analyse ChatGPT
+    # Analyse ChatGPT
     with st.spinner("Analyzing with ChatGPT…"):
         analysis = analyze_extracted_data(articles)
     st.markdown("### ChatGPT Analysis")
