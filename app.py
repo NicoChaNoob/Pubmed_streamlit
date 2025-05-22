@@ -163,7 +163,7 @@ def fetch_pubmed_details(pmids, api_key):
     return articles
 
 # Fonction d'analyse ChatGPT (inchangée)
- def analyze_extracted_data(articles):
+def analyze_extracted_data(articles):
    text_to_analyze = "\n".join(f"Title: {a['Title']}\nAbstract: {a['Abstract']}" for a in articles)
    prompt = (
       "Analyse ces résultats PubMed en synthèse naturalisée :\n\n" + text_to_analyze
