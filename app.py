@@ -88,7 +88,7 @@ def get_all_pubmed_pmids(query, api_key, batch=500):
         )
         resp = requests.get(url)
         part = ET.fromstring(resp.content)
-        pmids.extend([idn.text for idn in part.findall(".//Id")])
+        pmids.extend(idn.text for idn in part.findall(".//Id"))
         time.sleep(0.3)
     return pmids
 
@@ -115,14 +115,14 @@ def fetch_pubmed_details(pmids, api_key):
             return e.text if e is not None and e.text else default
 
         title    = get_text(art, "ArticleTitle")
-        abstract = " ".join([e.text for e in art.findall("Abstract/AbstractText") if e.text]) or "N/A"
+        abstract = " ".join(e.text for e in art.findall("Abstract/AbstractText") if e.text) or "N/A"
         journal  = get_text(art, "Journal/Title")
         pmc_id   = xr.findtext(".//PubmedData/ArticleIdList/ArticleId[@IdType='pmc']", "N/A")
 
         authors = []
         for au in art.findall("AuthorList/Author"):
             fn, ln = au.findtext("ForeName",""), au.findtext("LastName","")
-            name = (fn+" "+ln).strip()
+            name = (fn + " " + ln).strip()
             if name: authors.append(name)
         auth = "; ".join(authors) or "N/A"
 
@@ -132,10 +132,14 @@ def fetch_pubmed_details(pmids, api_key):
         pages  = get_text(art, "Pagination/MedlinePgn")
         year   = get_text(art, "Journal/JournalIssue/PubDate/Year")
         lang   = get_text(art, "Language")
-        mesh   = "; ".join([mh.findtext("DescriptorName","") 
-                          for mh in xr.findall(".//MeshHeadingList/MeshHeading")]) or "N/A"
-        grants = "; ".join([g.findtext("GrantID","") 
-                            for g in xr.findall(".//GrantList/Grant")]) or "N/A"
+        mesh   = "; ".join(
+            mh.findtext("DescriptorName","")
+            for mh in xr.findall(".//MeshHeadingList/MeshHeading")
+        ) or "N/A"
+        grants = "; ".join(
+            g.findtext("GrantID","")
+            for g in xr.findall(".//GrantList/Grant")
+        ) or "N/A"
 
         articles.append({
             "PMID": pmid,
@@ -157,17 +161,16 @@ def fetch_pubmed_details(pmids, api_key):
         time.sleep(0.3)
     return articles
 
-# Fonction d'analyse ChatGPT mise à jour
+# Fonction d'analyse ChatGPT sans limitation
+
 def analyze_extracted_data(articles):
-    # Limiter aux 20 premiers articles pour éviter de dépasser la limite de tokens
-    subset = articles[:20]
     text_to_analyze = "\n".join(
         f"Title: {a['Title']}\nAbstract: {a['Abstract']}"
-        for a in subset
+        for a in articles
     )
     prompt = (
-        "Voici un extrait des 20 premiers articles PubMed. Peux-tu en fournir "
-        "une synthèse en langage naturel, en identifiant les points clés et thématiques principales ?\n\n"
+        "Voici tous les articles PubMed récupérés. Peux-tu en fournir une synthèse "
+        "en langage naturel, en identifiant les points clés et thématiques principales ?\n\n"
         + text_to_analyze
     )
     resp = openai.ChatCompletion.create(
@@ -177,7 +180,7 @@ def analyze_extracted_data(articles):
             {"role": "user",   "content": prompt}
         ],
         temperature=0.7,
-        max_tokens=500
+        max_tokens=1500
     )
     return resp.choices[0].message.content
 
