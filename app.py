@@ -176,7 +176,7 @@ def analyze_extracted_data(articles):
         ],
         max_tokens=500
     )
-    return resp.choices[0].message.content
+return resp.choices[0].message.content
 
 ############################################
 # Bouton d'extraction et d'analyse
