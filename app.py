@@ -41,7 +41,7 @@ if not os.path.exists(english_tab_dir):
 
 API_KEY = "0028f009242fa540c86c474f429c330e8108"
 CHATGPT_API_KEY = "votre_cle_chatgpt_ici"
-openai.api_key = CHATGPT_API_KEY
+# openai.api_key = CHATGPT_API_KEY
 
 ############################################
 # Interface Streamlit
