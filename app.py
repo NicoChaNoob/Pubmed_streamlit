@@ -176,7 +176,7 @@ def analyze_extracted_data(articles):
 "2. Les centaines de mg/j ou doses responsables.\n "
 "3. Les populations (âge, pathologie) concernées.\n"
 "4. Une conclusion synthétique sur la tolérance globale du traitement.\n"
-"Réponds en quelques paragraphes.\n"
+"Réponds en quelques paragraphes et indique à chaque point clé sur quel article tu te bases.\n"
         + text_to_analyze
     )
     resp = openai.ChatCompletion.create(
