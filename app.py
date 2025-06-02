@@ -180,7 +180,7 @@ def analyze_extracted_data(articles):
             {"role": "user",   "content": prompt}
         ],
         temperature=0.7,
-        max_tokens=1500
+        max_tokens=3000
     )
     return resp.choices[0].message.content
 
