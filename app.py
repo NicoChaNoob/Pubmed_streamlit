@@ -59,7 +59,7 @@ date_range = st.date_input(
     "Sélectionnez la période de publication (début et fin) :",
     [pd.to_datetime("2000-01-01"), pd.to_datetime("2025-01-01")]
 )
-if isinstance(date_range, list) and len(date_range) == 2:
+if len(date_range) == 2:
     start_str = date_range[0].strftime("%Y/%m/%d")
     end_str = date_range[1].strftime("%Y/%m/%d")
     date_query = f"(\"{start_str}\"[Date - Publication] : \"{end_str}\"[Date - Publication])"
