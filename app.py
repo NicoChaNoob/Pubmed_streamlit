@@ -206,7 +206,7 @@ def analyze_extracted_data(articles):
             "1. La liste des effets indésirables principaux mentionnés.\n"
             "2. Leur fréquence (lorsque disponible).\n"
             "3. Toute information sur la tolérance ou la sécurité.\n\n"
-            "Fournis une synthèse claire et structurée."
+            "Fournis une synthèse claire et structurée et indique pour chaque point clef sur quel article tu t'appuies."
         )
         try:
             resp = openai.ChatCompletion.create(
