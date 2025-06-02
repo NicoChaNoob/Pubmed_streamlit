@@ -72,6 +72,7 @@ st.markdown(f"**Requête complète PubMed :** `{full_query}`")
 # Fonction de récupération paginée
 
 def get_all_pubmed_pmids(query, api_key, batch=500):
+    # 1) Obtenir le nombre total d’articles
     url0 = (
         f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?"
         f"db=pubmed&term={query}&retmode=xml&api_key={api_key}&retmax=0"
@@ -80,6 +81,7 @@ def get_all_pubmed_pmids(query, api_key, batch=500):
     root0 = ET.fromstring(r0.content)
     count = int(root0.findtext("Count", "0"))
     pmids = []
+    # 2) Paginer par lots de 'batch'
     for start in range(0, count, batch):
         url = (
             f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?"
@@ -161,34 +163,69 @@ def fetch_pubmed_details(pmids, api_key):
         time.sleep(0.3)
     return articles
 
-# Fonction d'analyse ChatGPT sans limitation
+# Fonction d'analyse ChatGPT, avec découpe en « chunks »
 
 def analyze_extracted_data(articles):
-    text_to_analyze = "\n".join(
-        f"Title: {a['Title']}\nAbstract: {a['Abstract']}"
-        for a in articles
-    )
-    prompt = (
-        "Voici tous les articles PubMed récupérés. Peux-tu en fournir une synthèse "
-        "en langage naturel, en identifiant les points clés et thématiques principales pour identifier les effets indésirables et à la tolérance chez  des humains ?\n"
-        "Peux-tu me donner : /n"
-"1. La liste des effets indésirables rapportés et leur fréquence (quand mentionnée).\n"
-"2. Les centaines de mg/j ou doses responsables.\n "
-"3. Les populations (âge, pathologie) concernées.\n"
-"4. Une conclusion synthétique sur la tolérance globale du traitement.\n"
-"Réponds en quelques paragraphes et indique à chaque point clé sur quel article tu te bases.\n"
-        + text_to_analyze
-    )
-    resp = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Tu es un expert en pharmacovigilance qui travaille pour un laboratoire pharmaceutique."},
-            {"role": "user",   "content": prompt}
-        ],
-        temperature=0.7,
-        max_tokens=3000
-    )
-    return resp.choices[0].message.content
+    # 1) Définir les mots-clés pour repérer les phrases liées aux effets indésirables
+    keywords = ["adverse", "side effect", "toxicity", "safety", "tolerance"]
+    relevant_texts = []
+
+    # 2) Parcourir chaque article et extraire les phrases contenant au moins un mot-clé
+    for a in articles:
+        # Titre + Abstract
+        title = a["Title"]
+        abstract = a["Abstract"]
+        # Séparer en phrases (NLTK)
+        sentences = nltk.tokenize.sent_tokenize(abstract)
+        # Garder seulement celles qui contiennent un des mots-clés
+        filtered = [s for s in sentences if any(k in s.lower() for k in keywords)]
+        if filtered:
+            joined = "\n".join(filtered)
+        else:
+            # Si aucune phrase n’évoque les effets indésirables, on peut indiquer explicitement
+            joined = "Aucune mention explicite d'effet indésirable."
+        relevant_texts.append(f"Title: {title}\nRelevant sentences:\n{joined}")
+
+    # 3) Si aucun texte pertinent trouvé, on renvoie un message
+    if not relevant_texts:
+        return "Aucun passage lié aux effets indésirables n’a été détecté dans les abstracts."
+
+    # 4) Découper en chunks de 10 articles pour rester sous la limite de tokens
+    chunk_size = 10
+    summaries = []
+    for i in range(0, len(relevant_texts), chunk_size):
+        chunk = relevant_texts[i : i + chunk_size]
+        text_to_analyze = "\n\n---\n\n".join(chunk)
+        prompt = (
+            "Tu es un expert en pharmacovigilance. Ci-dessous figurent des extraits d'articles PubMed qui "
+            "regroupent uniquement les phrases mentionnant des effets indésirables ou des questions de tolérance :\n\n"
+            + text_to_analyze
+            + "\n\nPeux-tu me fournir, pour ces articles :\n"
+            "1. La liste des effets indésirables principaux mentionnés.\n"
+            "2. Leur fréquence (lorsque disponible).\n"
+            "3. Toute information sur la tolérance ou la sécurité.\n\n"
+            "Fournis une synthèse claire et structurée."
+        )
+        try:
+            resp = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "Tu es un expert en pharmacovigilance."},
+                    {"role": "user",   "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=1000
+            )
+            summaries.append(resp.choices[0].message.content)
+        except Exception as e:
+            summaries.append(f"Erreur lors de l'appel à l'API ChatGPT pour le chunk {i//chunk_size + 1} : {e}")
+
+        # Pour éviter de dépasser le quota
+        time.sleep(1)
+
+    # 5) Concaténer les résumés de chaque chunk
+    full_analysis = "\n\n===== Chunk suivant =====\n\n".join(summaries)
+    return full_analysis
 
 ############################################
 # Bouton d'extraction et d'analyse
