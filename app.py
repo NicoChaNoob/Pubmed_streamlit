@@ -212,11 +212,11 @@ def analyze_extracted_data(articles):
             resp = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "Tu es un expert en pharmacovigilance."},
+                    {"role": "system", "content": "Tu es un expert en pharmacovigilance qui travaille pour un laboratoire pharmaceutique."},
                     {"role": "user",   "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=1000
+                max_tokens=4000
             )
             summaries.append(resp.choices[0].message.content)
         except Exception as e:
