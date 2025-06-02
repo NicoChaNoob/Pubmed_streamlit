@@ -62,9 +62,9 @@ date_range = st.date_input(
 if isinstance(date_range, list) and len(date_range) == 2:
     start_str = date_range[0].strftime("%Y/%m/%d")
     end_str = date_range[1].strftime("%Y/%m/%d")
-    date_query = f"({start_str}[dp] : {end_str}[dp])"
+    date_query = f"(\"{start_str}\"[Date - Publication] : \"{end_str}\"[Date - Publication])"
 else:
-    date_query = isinstance(date_range, list)
+    date_query = ""
 
 if date_query:
     full_query = f"{query_input} AND {date_query}"
