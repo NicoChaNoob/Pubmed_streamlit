@@ -166,31 +166,33 @@ def fetch_pubmed_details(pmids, api_key):
 # Fonction d'analyse ChatGPT, avec découpe en « chunks »
 
 def analyze_extracted_data(articles):
-    # 1) Définir les mots-clés pour repérer les phrases liées aux effets indésirables
+    # 1) Définir une fonction interne pour découper en phrases sans NLTK
+    import re
+    def split_into_sentences(text):
+        return re.split(r'(?<=[\.\!\?])\s+', text.strip())
+
+    # 2) Mots-clés pour repérer les phrases liées aux effets indésirables
     keywords = ["adverse", "side effect", "toxicity", "safety", "tolerance"]
     relevant_texts = []
 
-    # 2) Parcourir chaque article et extraire les phrases contenant au moins un mot-clé
+    # 3) Parcourir chaque article et extraire les phrases contenant un mot-clé
     for a in articles:
-        # Titre + Abstract
         title = a["Title"]
         abstract = a["Abstract"]
-        # Séparer en phrases (NLTK)
-        sentences = nltk.tokenize.sent_tokenize(abstract)
-        # Garder seulement celles qui contiennent un des mots-clés
+
+        sentences = split_into_sentences(abstract)
         filtered = [s for s in sentences if any(k in s.lower() for k in keywords)]
         if filtered:
             joined = "\n".join(filtered)
         else:
-            # Si aucune phrase n’évoque les effets indésirables, on peut indiquer explicitement
             joined = "Aucune mention explicite d'effet indésirable."
         relevant_texts.append(f"Title: {title}\nRelevant sentences:\n{joined}")
 
-    # 3) Si aucun texte pertinent trouvé, on renvoie un message
+    # 4) Si aucun texte pertinent, on renvoie un message
     if not relevant_texts:
         return "Aucun passage lié aux effets indésirables n’a été détecté dans les abstracts."
 
-    # 4) Découper en chunks de 10 articles pour rester sous la limite de tokens
+    # 5) Découper en chunks de 10 articles
     chunk_size = 10
     summaries = []
     for i in range(0, len(relevant_texts), chunk_size):
@@ -220,10 +222,9 @@ def analyze_extracted_data(articles):
         except Exception as e:
             summaries.append(f"Erreur lors de l'appel à l'API ChatGPT pour le chunk {i//chunk_size + 1} : {e}")
 
-        # Pour éviter de dépasser le quota
-        time.sleep(1)
+        time.sleep(1)  # Petite pause entre les requêtes
 
-    # 5) Concaténer les résumés de chaque chunk
+    # 6) Concaténer les résumés de chaque chunk
     full_analysis = "\n\n===== Chunk suivant =====\n\n".join(summaries)
     return full_analysis
 
