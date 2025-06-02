@@ -170,13 +170,19 @@ def analyze_extracted_data(articles):
     )
     prompt = (
         "Voici tous les articles PubMed récupérés. Peux-tu en fournir une synthèse "
-        "en langage naturel, en identifiant les points clés et thématiques principales ?\n\n"
+        "en langage naturel, en identifiant les points clés et thématiques principales pour identifier les effets indésirables et à la tolérance chez  des humains ?\n"
+        "Peux-tu me donner : /n"
+"1. La liste des effets indésirables rapportés et leur fréquence (quand mentionnée).\n"
+"2. Les centaines de mg/j ou doses responsables.\n "
+"3. Les populations (âge, pathologie) concernées.\n"
+"4. Une conclusion synthétique sur la tolérance globale du traitement.\n"
+"Réponds en quelques paragraphes.\n"
         + text_to_analyze
     )
     resp = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "Tu es un expert en pharmacovigilance."},
+            {"role": "system", "content": "Tu es un expert en pharmacovigilance qui travaille pour un laboratoire pharmaceutique."},
             {"role": "user",   "content": prompt}
         ],
         temperature=0.7,
