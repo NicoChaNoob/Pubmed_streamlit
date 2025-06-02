@@ -64,7 +64,7 @@ if isinstance(date_range, list) and len(date_range) == 2:
     end_str = date_range[1].strftime("%Y/%m/%d")
     date_query = f"({start_str}[dp] : {end_str}[dp])"
 else:
-    date_query = ""
+    date_query = "len(date_range)"
 
 if date_query:
     full_query = f"{query_input} AND {date_query}"
