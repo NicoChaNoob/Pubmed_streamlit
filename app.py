@@ -1,4 +1,4 @@
-import os
+nimport os
 import shutil
 import time
 import streamlit as st
@@ -209,7 +209,7 @@ def analyze_extracted_data(articles):
             "1. La liste des effets indésirables principaux mentionnés.\n"
             "2. Leur fréquence (lorsque disponible).\n"
             "3. Toute information sur la tolérance ou la sécurité.\n\n"
-            "Fournis une synthèse claire et structurée et indique pour chaque point clef sur quel article tu t'appuies."
+            "Enfin, fournis une synthèse globale à travers tous les articles pour les 3 points listés précédemment. Cette synthèse doit êtreclaire et structurée et indique pour chaque point clef sur quel article tu t'appuies."
         )
         try:
             resp = openai.ChatCompletion.create(
@@ -264,6 +264,7 @@ if st.button("Run Search & Analyze"):
             analysis = analyze_extracted_data(articles)
         st.markdown("### ChatGPT Analysis")
         st.write(analysis)
+
 
 
 
