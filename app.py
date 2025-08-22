@@ -196,7 +196,7 @@ def analyze_extracted_data(articles):
         return "Aucun passage lié aux effets indésirables n’a été détecté dans les abstracts."
 
     # 5) Découper en chunks de 10 articles
-    chunk_size = 10
+    chunk_size = 30
     summaries = []
     for i in range(0, len(relevant_texts), chunk_size):
         chunk = relevant_texts[i : i + chunk_size]
@@ -213,7 +213,7 @@ def analyze_extracted_data(articles):
         )
         try:
             resp = openai.ChatCompletion.create(
-                model="gpt-5",
+                model="gpt-4.1",
                 messages=[
                     {"role": "system", "content": "Tu es un expert en pharmacovigilance qui travaille pour un laboratoire pharmaceutique."},
                     {"role": "user",   "content": prompt}
@@ -264,6 +264,7 @@ if st.button("Run Search & Analyze"):
             analysis = analyze_extracted_data(articles)
         st.markdown("### ChatGPT Analysis")
         st.write(analysis)
+
 
 
 
