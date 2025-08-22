@@ -218,7 +218,7 @@ def analyze_extracted_data(articles):
                     {"role": "system", "content": "Tu es un expert en pharmacovigilance qui travaille pour un laboratoire pharmaceutique."},
                     {"role": "user",   "content": prompt}
                 ],
-                temperature=0.7,
+                temperature=1,
                 max_completion_tokens=40000
             )
             summaries.append(resp.choices[0].message.content)
@@ -264,6 +264,7 @@ if st.button("Run Search & Analyze"):
             analysis = analyze_extracted_data(articles)
         st.markdown("### ChatGPT Analysis")
         st.write(analysis)
+
 
 
 
