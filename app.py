@@ -213,7 +213,7 @@ def analyze_extracted_data(articles):
         )
         try:
             resp = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model="gpt-5",
                 messages=[
                     {"role": "system", "content": "Tu es un expert en pharmacovigilance qui travaille pour un laboratoire pharmaceutique."},
                     {"role": "user",   "content": prompt}
@@ -264,4 +264,5 @@ if st.button("Run Search & Analyze"):
             analysis = analyze_extracted_data(articles)
         st.markdown("### ChatGPT Analysis")
         st.write(analysis)
+
 
