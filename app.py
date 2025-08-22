@@ -219,7 +219,7 @@ def analyze_extracted_data(articles):
                     {"role": "user",   "content": prompt}
                 ],
                 temperature=1,
-                max_completion_tokens=40000
+                max_completion_tokens=30000
             )
             summaries.append(resp.choices[0].message.content)
         except Exception as e:
@@ -264,6 +264,7 @@ if st.button("Run Search & Analyze"):
             analysis = analyze_extracted_data(articles)
         st.markdown("### ChatGPT Analysis")
         st.write(analysis)
+
 
 
 
