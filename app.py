@@ -1,4 +1,4 @@
-nimport os
+import os
 import shutil
 import time
 import streamlit as st
@@ -264,6 +264,7 @@ if st.button("Run Search & Analyze"):
             analysis = analyze_extracted_data(articles)
         st.markdown("### ChatGPT Analysis")
         st.write(analysis)
+
 
 
 
