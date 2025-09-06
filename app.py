@@ -223,8 +223,8 @@ def analyze_extracted_data(articles):
         prompt = (
             "Tu es un expert en pharmacovigilance. On te fournit, par article, un PMID, un titre, et une liste de "
             "phrases candidates extraites depuis l'abstract, susceptibles de mentionner des effets indésirables ou des informations de tolérance ou de sécurité.\n\n"
-            "Tâche : pour chaque article du lot, fournis \n
-            1. La liste des effets indésirables principaux mentionnés.\n" 
+            "Tâche : pour chaque article du lot, fournis \n"
+            "1. La liste des effets indésirables principaux mentionnés.\n" 
             "2. Leur fréquence (lorsque disponible).\n" 
             "3. Toute information sur la tolérance ou la sécurité.\n\n" 
             "Enfin, fournis une synthèse globale à travers tous les articles pour les 3 points listés précédemment. Cette synthèse doit êtreclaire et structurée et indique pour chaque point clef sur quel article tu t'appuies."
@@ -364,4 +364,5 @@ if st.button("Run Search & Analyze"):
         # Affichage synthèse des tokens
         st.markdown("#### Token usage (cette exécution)")
         st.write(pd.DataFrame([usage]))
+
 
