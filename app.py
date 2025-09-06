@@ -222,34 +222,22 @@ def analyze_extracted_data(articles):
         # IMPORTANT : on demande une sortie structurée avec citation exacte et PMID
         prompt = (
             "Tu es un expert en pharmacovigilance. On te fournit, par article, un PMID, un titre, et une liste de "
-            "phrases candidates extraites depuis l'abstract, susceptibles de mentionner des effets indésirables.\n\n"
-            "Tâche : pour chaque article du lot, identifie les effets indésirables mentionnés et renvoie, pour chacun, "
-            "les champs suivants en JSON STRICT (une liste par article) :\n\n"
-            "ArticleResult = {\n"
-            '  "pmid": "<PMID>",\n'
-            '  "effects": [\n'
-            '    {\n'
-            '      "term": "<effet indésirable (standardisé si possible)>",\n'
-            '      "frequency": "<fréquence si disponible, sinon null>",\n'
-            '      "population": "<population/bras si mentionné, sinon null>",\n'
-            '      "quote": "<phrase exacte copiée mot à mot d’une des phrases candidates>",\n'
-            '      "source_sentence_index": <index 0-based de la phrase candidate utilisée>\n'
-            "    }, ...\n"
-            "  ]\n"
-            "}\n\n"
+            "phrases candidates extraites depuis l'abstract, susceptibles de mentionner des effets indésirables ou des informations de tolérance ou de sécurité.\n\n"
+            "Tâche : pour chaque article du lot, fournis \n
+            1. La liste des effets indésirables principaux mentionnés.\n" 
+            "2. Leur fréquence (lorsque disponible).\n" 
+            "3. Toute information sur la tolérance ou la sécurité.\n\n" 
+            "Enfin, fournis une synthèse globale à travers tous les articles pour les 3 points listés précédemment. Cette synthèse doit êtreclaire et structurée et indique pour chaque point clef sur quel article tu t'appuies."
             "Contraintes :\n"
-            "- La valeur de \"quote\" doit être une des phrases candidates EXACTEMENT, sans reformulation.\n"
             "- Ne crée pas d'information absente des phrases candidates.\n"
-            "- Si aucun effet n'est présent pour un article, renvoie effects: [].\n"
-            "- Retourne uniquement un JSON valide : [ArticleResult, ...] sans texte additionnel.\n\n"
-            f"LOT D'ARTICLES À ANALYSER:\n{text_to_analyze}"
+            "- Si aucun effet ou information sur la tolérance ou la sécurité n'est présent pour un article, renvoie: 'rien'.\n"
         )
 
         try:
             resp = openai.ChatCompletion.create(
                 model=MODEL_NAME,
                 messages=[
-                    {"role": "system", "content": "Tu es un assistant d'extraction factuelle strict. Tu respectes les contraintes JSON et ne cites que le texte fourni."},
+                    {"role": "system", "content": "Tu es un assistant d'extraction factuelle strict qui est un expert en pharmacovigilane. Tu respectes les contraintes et ne cites que le texte fourni."},
                     {"role": "user",   "content": prompt}
                 ],
                 temperature=TEMPERATURE,
@@ -319,9 +307,9 @@ if st.button("Run Search & Analyze"):
     }
     df_token_log_session = pd.DataFrame([token_log_row])
 
-    # Si >50 articles : pas d'analyse, log à 0 tokens
-    if len(articles) > 50:
-        st.warning("ℹ️ Le nombre d’articles extrait est supérieur à 50. L’analyse ChatGPT ne sera pas exécutée.")
+    # Si >100 articles : pas d'analyse, log à 0 tokens
+    if len(articles) > 100:
+        st.warning("ℹ️ Le nombre d’articles extrait est supérieur à 100. L’analyse ChatGPT ne sera pas exécutée.")
 
         # Écriture Excel (Articles + Token_Log (append))
         if os.path.exists(out):
@@ -376,3 +364,4 @@ if st.button("Run Search & Analyze"):
         # Affichage synthèse des tokens
         st.markdown("#### Token usage (cette exécution)")
         st.write(pd.DataFrame([usage]))
+
