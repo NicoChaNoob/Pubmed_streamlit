@@ -47,7 +47,7 @@ MODEL_NAME = st.secrets.get("OPENAI_MODEL", "gpt-4o")
 # Paramètres conseillés pour extraction factuelle
 TEMPERATURE = 0.1
 MAX_TOKENS_OUT = 1200
-CHUNK_SIZE = 30 if MODEL_NAME == "gpt-4o" else 40
+CHUNK_SIZE = 100 if MODEL_NAME == "gpt-4o" else 40
 
 ############################################
 # Interface Streamlit
@@ -231,6 +231,7 @@ def analyze_extracted_data(articles):
             "Contraintes :\n"
             "- Ne crée pas d'information absente des phrases candidates.\n"
             "- Si aucun effet ou information sur la tolérance ou la sécurité n'est présent pour un article, renvoie: 'rien'.\n"
+            f"LOT D'ARTICLES À ANALYSER:\n{text_to_analyze}"
         )
 
         try:
@@ -364,5 +365,6 @@ if st.button("Run Search & Analyze"):
         # Affichage synthèse des tokens
         st.markdown("#### Token usage (cette exécution)")
         st.write(pd.DataFrame([usage]))
+
 
 
